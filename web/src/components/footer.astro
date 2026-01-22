@@ -1,0 +1,90 @@
+---
+const currentYear = new Date().getFullYear();
+
+const links = [
+  { label: 'Specification', href: 'https://github.com/dylankamski/waterscape/blob/main/docs/SPECIFICATION.md' },
+  { label: 'GitHub', href: 'https://github.com/dylankamski/waterscape' },
+  { label: 'OpenClaw', href: 'https://github.com/dylankamski/waterscape/blob/main/openclaw/README.md' },
+];
+---
+
+<footer class="footer">
+  <div class="container footer-inner">
+    <div class="footer-left">
+      <span class="footer-symbol">©</span>
+      <span class="footer-copy">{currentYear} waterscape protocol.</span>
+    </div>
+    
+    <nav class="footer-nav">
+      {links.map((link) => (
+        <a href={link.href} class="footer-link">
+          {link.label}
+        </a>
+      ))}
+    </nav>
+    
+    <div class="footer-right">
+      <span class="text-tertiary">v1.0</span>
+    </div>
+  </div>
+</footer>
+
+<style>
+  .footer {
+    border-top: 1px solid var(--color-border);
+    padding: var(--spacing-xl) 0;
+  }
+  
+  .footer-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  
+  .footer-left {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+  }
+  
+  .footer-symbol {
+    opacity: 0.5;
+  }
+  
+  .footer-copy {
+    font-size: 0.75rem;
+    color: var(--color-text-secondary);
+  }
+  
+  .footer-nav {
+    display: flex;
+    gap: var(--spacing-xl);
+  }
+  
+  .footer-link {
+    font-size: 0.75rem;
+    color: var(--color-text-secondary);
+    border: none;
+    transition: color var(--transition-fast);
+  }
+  
+  .footer-link:hover {
+    color: var(--color-text);
+  }
+  
+  .footer-right {
+    font-size: 0.75rem;
+  }
+  
+  @media (max-width: 768px) {
+    .footer-inner {
+      flex-direction: column;
+      gap: var(--spacing-lg);
+      text-align: center;
+    }
+    
+    .footer-nav {
+      gap: var(--spacing-lg);
+    }
+  }
+</style>

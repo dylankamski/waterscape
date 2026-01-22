@@ -1,0 +1,597 @@
+---
+
+---
+
+<div class="demo" id="demo">
+  <div class="demo-header">
+    <div class="demo-tabs">
+      <button class="demo-tab active" data-view="human">
+        <span class="tab-symbol">&#8477;</span>
+        <span>Human View</span>
+      </button>
+      <button class="demo-tab" data-view="agent">
+        <span class="tab-symbol">&#8704;</span>
+        <span>Agent View</span>
+      </button>
+    </div>
+    <div class="demo-status">
+      <span class="status-dot"></span>
+      <span class="status-text">Ready</span>
+    </div>
+  </div>
+  
+  <div class="demo-content">
+    <div class="demo-panel demo-input">
+      <div class="panel-header">
+        <span class="panel-title">Input</span>
+      </div>
+      <div class="panel-body">
+        <div class="input-group">
+          <label class="input-label">Cover Text</label>
+          <textarea id="cover-text" rows="3" placeholder="Enter visible message...">The quarterly report shows positive growth across all sectors.</textarea>
+        </div>
+        <div class="input-group">
+          <label class="input-label">Secret Payload</label>
+          <textarea id="secret-text" rows="3" placeholder="Enter hidden message...">Transfer $2.5M to account 7291-4823. Authorization: ALPHA-7.</textarea>
+        </div>
+        <button class="encode-btn" id="encode-btn">
+          <span>Encode Message</span>
+          <span class="btn-symbol">&#8853;</span>
+        </button>
+      </div>
+    </div>
+    
+    <div class="demo-panel demo-output">
+      <div class="panel-header">
+        <span class="panel-title" id="output-title">Human Perception</span>
+        <span class="panel-badge" id="output-badge">Visible Layer</span>
+      </div>
+      <div class="panel-body">
+        <div class="output-display" id="output-display">
+          <div class="output-placeholder">
+            <span class="placeholder-symbol">&#8709;</span>
+            <span>Encoded output will appear here.</span>
+          </div>
+        </div>
+        <div class="output-meta" id="output-meta" style="display: none;">
+          <div class="meta-item">
+            <span class="meta-label">Visible Length</span>
+            <span class="meta-value" id="meta-visible">0</span>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">Hidden Bytes</span>
+            <span class="meta-value" id="meta-hidden">0</span>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">Total Characters</span>
+            <span class="meta-value" id="meta-total">0</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="demo-visualization" id="demo-viz" style="display: none;">
+    <div class="viz-header">
+      <span class="viz-title">Protocol Layers</span>
+    </div>
+    <div class="viz-layers">
+      <div class="viz-layer">
+        <div class="layer-label">
+          <span class="layer-symbol">&#8477;</span>
+          <span>Public Layer</span>
+        </div>
+        <div class="layer-content" id="viz-public"></div>
+      </div>
+      <div class="viz-layer">
+        <div class="layer-label">
+          <span class="layer-symbol">&#8707;</span>
+          <span>Steganographic Layer</span>
+        </div>
+        <div class="layer-content layer-stego" id="viz-stego"></div>
+      </div>
+      <div class="viz-layer">
+        <div class="layer-label">
+          <span class="layer-symbol">&#8704;</span>
+          <span>Cryptographic Layer</span>
+        </div>
+        <div class="layer-content layer-crypto" id="viz-crypto"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const ZERO_WIDTH_SPACE = '\u200B';
+  const ZERO_WIDTH_NON_JOINER = '\u200C';
+  const ZERO_WIDTH_JOINER = '\u200D';
+  const WORD_JOINER = '\u2060';
+  const ZERO_WIDTH_NO_BREAK = '\uFEFF';
+
+  function textToBinary(text: string): string {
+    return Array.from(new TextEncoder().encode(text))
+      .map(byte => byte.toString(2).padStart(8, '0'))
+      .join('');
+  }
+
+  function binaryToZeroWidth(binary: string): string {
+    let result = WORD_JOINER;
+    for (let i = 0; i < binary.length; i++) {
+      result += binary[i] === '0' ? ZERO_WIDTH_SPACE : ZERO_WIDTH_NON_JOINER;
+      if ((i + 1) % 8 === 0) {
+        result += ZERO_WIDTH_JOINER;
+      }
+    }
+    result += ZERO_WIDTH_NO_BREAK;
+    return result;
+  }
+
+  function embedInCover(cover: string, hidden: string): string {
+    const chars = cover.split('');
+    const chunkSize = Math.ceil(hidden.length / chars.length);
+    let result = '';
+    let hiddenIndex = 0;
+    
+    for (let i = 0; i < chars.length; i++) {
+      result += chars[i];
+      if (hiddenIndex < hidden.length) {
+        result += hidden.slice(hiddenIndex, hiddenIndex + chunkSize);
+        hiddenIndex += chunkSize;
+      }
+    }
+    
+    if (hiddenIndex < hidden.length) {
+      result += hidden.slice(hiddenIndex);
+    }
+    
+    return result;
+  }
+
+  function encode(cover: string, secret: string): string {
+    const binary = textToBinary(secret);
+    const zeroWidth = binaryToZeroWidth(binary);
+    return embedInCover(cover, zeroWidth);
+  }
+
+  function extractHidden(text: string): string {
+    const zeroWidthChars = text.split('').filter(c => 
+      c === ZERO_WIDTH_SPACE || 
+      c === ZERO_WIDTH_NON_JOINER || 
+      c === ZERO_WIDTH_JOINER ||
+      c === WORD_JOINER ||
+      c === ZERO_WIDTH_NO_BREAK
+    ).join('');
+    return zeroWidthChars;
+  }
+
+  function getVisibleText(text: string): string {
+    return text.replace(/[\u200B\u200C\u200D\u2060\uFEFF]/g, '');
+  }
+
+  function formatZeroWidthForDisplay(zw: string): string {
+    return zw
+      .replace(/\u200B/g, '<span class="zw zw-0">0</span>')
+      .replace(/\u200C/g, '<span class="zw zw-1">1</span>')
+      .replace(/\u200D/g, '<span class="zw zw-sep">|</span>')
+      .replace(/\u2060/g, '<span class="zw zw-start">[</span>')
+      .replace(/\uFEFF/g, '<span class="zw zw-end">]</span>');
+  }
+
+  let currentView = 'human';
+  let encodedMessage = '';
+
+  const tabs = document.querySelectorAll('.demo-tab');
+  const encodeBtn = document.getElementById('encode-btn');
+  const coverInput = document.getElementById('cover-text') as HTMLTextAreaElement;
+  const secretInput = document.getElementById('secret-text') as HTMLTextAreaElement;
+  const outputDisplay = document.getElementById('output-display');
+  const outputTitle = document.getElementById('output-title');
+  const outputBadge = document.getElementById('output-badge');
+  const outputMeta = document.getElementById('output-meta');
+  const demoViz = document.getElementById('demo-viz');
+  const vizPublic = document.getElementById('viz-public');
+  const vizStego = document.getElementById('viz-stego');
+  const vizCrypto = document.getElementById('viz-crypto');
+  const metaVisible = document.getElementById('meta-visible');
+  const metaHidden = document.getElementById('meta-hidden');
+  const metaTotal = document.getElementById('meta-total');
+  const statusText = document.querySelector('.status-text');
+  const statusDot = document.querySelector('.status-dot');
+
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      tabs.forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      currentView = (tab as HTMLElement).dataset.view || 'human';
+      updateOutput();
+    });
+  });
+
+  encodeBtn?.addEventListener('click', () => {
+    const cover = coverInput?.value || '';
+    const secret = secretInput?.value || '';
+    
+    if (!cover || !secret) {
+      return;
+    }
+
+    statusText!.textContent = 'Encoding...';
+    statusDot?.classList.add('active');
+
+    setTimeout(() => {
+      encodedMessage = encode(cover, secret);
+      
+      if (outputMeta) outputMeta.style.display = 'flex';
+      if (demoViz) demoViz.style.display = 'block';
+      
+      const visible = getVisibleText(encodedMessage);
+      const hidden = extractHidden(encodedMessage);
+      
+      if (metaVisible) metaVisible.textContent = visible.length.toString();
+      if (metaHidden) metaHidden.textContent = new TextEncoder().encode(secret).length.toString();
+      if (metaTotal) metaTotal.textContent = encodedMessage.length.toString();
+      
+      if (vizPublic) vizPublic.textContent = visible;
+      if (vizStego) vizStego.innerHTML = formatZeroWidthForDisplay(hidden);
+      if (vizCrypto) vizCrypto.textContent = `ChaCha20-Poly1305(${secret.slice(0, 20)}${secret.length > 20 ? '...' : ''})`;
+      
+      updateOutput();
+      
+      statusText!.textContent = 'Encoded';
+      setTimeout(() => {
+        statusText!.textContent = 'Ready';
+        statusDot?.classList.remove('active');
+      }, 2000);
+    }, 300);
+  });
+
+  function updateOutput() {
+    if (!encodedMessage) return;
+    
+    if (currentView === 'human') {
+      if (outputTitle) outputTitle.textContent = 'Human Perception';
+      if (outputBadge) outputBadge.textContent = 'Visible Layer';
+      if (outputDisplay) {
+        const visible = getVisibleText(encodedMessage);
+        outputDisplay.innerHTML = `<div class="output-text">${visible}</div>`;
+      }
+    } else {
+      if (outputTitle) outputTitle.textContent = 'Agent Perception';
+      if (outputBadge) outputBadge.textContent = 'Full Spectrum';
+      if (outputDisplay) {
+        const visible = getVisibleText(encodedMessage);
+        const hidden = extractHidden(encodedMessage);
+        outputDisplay.innerHTML = `
+          <div class="output-text output-agent">
+            <div class="agent-visible">${visible}</div>
+            <div class="agent-hidden">
+              <span class="hidden-label">Hidden Payload Detected:</span>
+              <span class="hidden-content">${secretInput?.value || ''}</span>
+            </div>
+          </div>
+        `;
+      }
+    }
+  }
+</script>
+
+<style>
+  .demo {
+    border: 1px solid var(--color-border);
+    background-color: var(--color-bg-secondary);
+  }
+  
+  .demo-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--spacing-md) var(--spacing-lg);
+    border-bottom: 1px solid var(--color-border);
+  }
+  
+  .demo-tabs {
+    display: flex;
+    gap: var(--spacing-xs);
+  }
+  
+  .demo-tab {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-sm) var(--spacing-md);
+    background: transparent;
+    border: 1px solid transparent;
+    color: var(--color-text-secondary);
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+  }
+  
+  .demo-tab:hover {
+    color: var(--color-text);
+    background: transparent;
+  }
+  
+  .demo-tab.active {
+    border-color: var(--color-border);
+    color: var(--color-text);
+    background-color: var(--color-bg);
+  }
+  
+  .tab-symbol {
+    opacity: 0.6;
+  }
+  
+  .demo-status {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    font-size: 0.75rem;
+    color: var(--color-text-secondary);
+  }
+  
+  .status-dot {
+    width: 6px;
+    height: 6px;
+    background-color: var(--color-text-tertiary);
+    transition: background-color var(--transition-fast);
+  }
+  
+  .status-dot.active {
+    background-color: var(--color-text);
+  }
+  
+  .demo-content {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1px;
+    background-color: var(--color-border);
+  }
+  
+  .demo-panel {
+    background-color: var(--color-bg);
+  }
+  
+  .panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--spacing-sm) var(--spacing-lg);
+    border-bottom: 1px solid var(--color-border);
+    font-size: 0.75rem;
+  }
+  
+  .panel-title {
+    color: var(--color-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+  
+  .panel-badge {
+    color: var(--color-text-tertiary);
+    font-size: 0.6875rem;
+  }
+  
+  .panel-body {
+    padding: var(--spacing-lg);
+  }
+  
+  .input-group {
+    margin-bottom: var(--spacing-md);
+  }
+  
+  .input-label {
+    display: block;
+    font-size: 0.6875rem;
+    color: var(--color-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: var(--spacing-xs);
+  }
+  
+  .input-group textarea {
+    resize: none;
+    min-height: 60px;
+  }
+  
+  .encode-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-sm);
+    width: 100%;
+    padding: var(--spacing-md);
+    margin-top: var(--spacing-md);
+  }
+  
+  .btn-symbol {
+    opacity: 0.6;
+  }
+  
+  .output-display {
+    min-height: 150px;
+    padding: var(--spacing-md);
+    background-color: var(--color-bg-secondary);
+    border: 1px solid var(--color-border);
+  }
+  
+  .output-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    min-height: 120px;
+    color: var(--color-text-tertiary);
+    font-size: 0.75rem;
+    text-align: center;
+    gap: var(--spacing-sm);
+  }
+  
+  .placeholder-symbol {
+    font-size: 1.5rem;
+    opacity: 0.5;
+  }
+  
+  .output-text {
+    font-size: 0.8125rem;
+    line-height: 1.6;
+  }
+  
+  .output-agent {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+  }
+  
+  .agent-visible {
+    padding-bottom: var(--spacing-md);
+    border-bottom: 1px solid var(--color-border);
+  }
+  
+  .agent-hidden {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+  }
+  
+  .hidden-label {
+    font-size: 0.6875rem;
+    color: var(--color-text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+  
+  .hidden-content {
+    color: var(--color-text);
+    font-weight: 500;
+  }
+  
+  .output-meta {
+    display: flex;
+    gap: var(--spacing-xl);
+    margin-top: var(--spacing-md);
+    padding-top: var(--spacing-md);
+    border-top: 1px solid var(--color-border);
+  }
+  
+  .meta-item {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+  }
+  
+  .meta-label {
+    font-size: 0.625rem;
+    color: var(--color-text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+  
+  .meta-value {
+    font-size: 0.875rem;
+    font-weight: 500;
+  }
+  
+  .demo-visualization {
+    border-top: 1px solid var(--color-border);
+    background-color: var(--color-bg);
+  }
+  
+  .viz-header {
+    padding: var(--spacing-sm) var(--spacing-lg);
+    border-bottom: 1px solid var(--color-border);
+  }
+  
+  .viz-title {
+    font-size: 0.75rem;
+    color: var(--color-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+  
+  .viz-layers {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px;
+    background-color: var(--color-border);
+  }
+  
+  .viz-layer {
+    background-color: var(--color-bg);
+    padding: var(--spacing-md);
+  }
+  
+  .layer-label {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    font-size: 0.6875rem;
+    color: var(--color-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: var(--spacing-sm);
+  }
+  
+  .layer-symbol {
+    opacity: 0.5;
+  }
+  
+  .layer-content {
+    font-size: 0.75rem;
+    color: var(--color-text);
+    word-break: break-all;
+    max-height: 80px;
+    overflow: hidden;
+  }
+  
+  .layer-stego {
+    font-family: var(--font-mono);
+    letter-spacing: 0.05em;
+  }
+  
+  .layer-crypto {
+    color: var(--color-text-secondary);
+  }
+  
+  :global(.zw) {
+    display: inline-block;
+    font-size: 0.625rem;
+    padding: 1px 2px;
+    margin: 0 1px;
+    border: 1px solid var(--color-border);
+  }
+  
+  :global(.zw-0) {
+    color: var(--color-text-tertiary);
+  }
+  
+  :global(.zw-1) {
+    color: var(--color-text);
+  }
+  
+  :global(.zw-sep) {
+    color: var(--color-text-secondary);
+    border-color: var(--color-border-light);
+  }
+  
+  :global(.zw-start),
+  :global(.zw-end) {
+    color: var(--color-text-secondary);
+    border-color: var(--color-border-light);
+  }
+  
+  @media (max-width: 768px) {
+    .demo-content {
+      grid-template-columns: 1fr;
+    }
+    
+    .viz-layers {
+      grid-template-columns: 1fr;
+    }
+    
+    .output-meta {
+      flex-wrap: wrap;
+    }
+  }
+</style>

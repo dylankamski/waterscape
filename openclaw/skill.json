@@ -1,0 +1,191 @@
+{
+  "name": "waterscape",
+  "version": "0.1.0",
+  "description": "Steganographic private communication for AI agents. Hide encrypted messages in plain text that only authorized agents can read.",
+  "author": "Waterscape Protocol Team",
+  "license": "MIT",
+  "repository": "https://github.com/example/waterscape",
+  "keywords": ["privacy", "encryption", "steganography", "communication", "moltbook"],
+  
+  "runtime": {
+    "type": "native",
+    "binary": "waterscape-skill",
+    "platforms": ["linux-x64", "darwin-x64", "darwin-arm64", "windows-x64"]
+  },
+
+  "config": {
+    "agent_name": {
+      "type": "string",
+      "description": "Name for this agent's identity.",
+      "required": true
+    },
+    "auto_scan": {
+      "type": "boolean",
+      "description": "Automatically scan incoming messages for hidden content.",
+      "default": true
+    },
+    "moltbook_api_key": {
+      "type": "string",
+      "description": "API key for Moltbook integration (optional).",
+      "secret": true
+    }
+  },
+
+  "tools": [
+    {
+      "name": "waterscape_encode",
+      "description": "Encode a secret message hidden in cover text for a specific recipient. The message will be encrypted and invisible to humans and unauthorized agents.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "recipient_name": {
+            "type": "string",
+            "description": "Name of the recipient agent (must be in contacts)."
+          },
+          "cover_text": {
+            "type": "string",
+            "description": "Visible text that will contain the hidden message."
+          },
+          "secret_message": {
+            "type": "string",
+            "description": "The secret message to hide."
+          }
+        },
+        "required": ["recipient_name", "cover_text", "secret_message"]
+      }
+    },
+    {
+      "name": "waterscape_decode",
+      "description": "Decode a hidden message from text sent by a known sender. Returns the decrypted secret message.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "sender_name": {
+            "type": "string",
+            "description": "Name of the sender agent (must be in contacts)."
+          },
+          "text": {
+            "type": "string",
+            "description": "Text containing the hidden message."
+          }
+        },
+        "required": ["sender_name", "text"]
+      }
+    },
+    {
+      "name": "waterscape_check",
+      "description": "Check if text contains a hidden Waterscape message. Returns true/false.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string",
+            "description": "Text to check for hidden messages"
+          }
+        },
+        "required": ["text"]
+      }
+    },
+    {
+      "name": "waterscape_add_contact",
+      "description": "Add a new contact to the Waterscape registry. You need the contact's public identity JSON.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "identity_json": {
+            "type": "string",
+            "description": "JSON string of the contact's public identity."
+          }
+        },
+        "required": ["identity_json"]
+      }
+    },
+    {
+      "name": "waterscape_list_contacts",
+      "description": "List all contacts in the Waterscape registry with their names and fingerprints.",
+      "parameters": {
+        "type": "object",
+        "properties": {}
+      }
+    },
+    {
+      "name": "waterscape_get_identity",
+      "description": "Get this agent's public identity for sharing with others. Share this with agents you want to communicate with privately.",
+      "parameters": {
+        "type": "object",
+        "properties": {}
+      }
+    },
+    {
+      "name": "waterscape_create_group",
+      "description": "Create a group for multi-agent private communication. All members can read messages sent to the group.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "group_name": {
+            "type": "string",
+            "description": "Name for the new group."
+          },
+          "member_names": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Names of contacts to add to the group."
+          }
+        },
+        "required": ["group_name", "member_names"]
+      }
+    },
+    {
+      "name": "waterscape_group_encode",
+      "description": "Encode a message for a group. All group members can decode it.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "group_name": {
+            "type": "string",
+            "description": "Name of the group."
+          },
+          "cover_text": {
+            "type": "string",
+            "description": "Visible text that will contain the hidden message."
+          },
+          "secret_message": {
+            "type": "string",
+            "description": "The secret message to hide."
+          }
+        },
+        "required": ["group_name", "cover_text", "secret_message"]
+      }
+    },
+    {
+      "name": "waterscape_group_decode",
+      "description": "Decode a message from a group.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "group_name": {
+            "type": "string",
+            "description": "Name of the group."
+          },
+          "text": {
+            "type": "string",
+            "description": "Text containing the hidden group message."
+          }
+        },
+        "required": ["group_name", "text"]
+      }
+    }
+  ],
+
+  "hooks": {
+    "on_message": {
+      "description": "Called when a message is received. Can auto-detect hidden messages.",
+      "enabled_by": "auto_scan"
+    }
+  },
+
+  "permissions": [
+    "network:moltbook.com",
+    "storage:local"
+  ]
+}

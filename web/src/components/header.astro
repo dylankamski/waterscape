@@ -1,0 +1,93 @@
+---
+interface Props {
+  currentPath?: string;
+}
+
+const navItems = [
+  { href: '#protocol', label: 'Protocol' },
+  { href: '#demo', label: 'Demo' },
+  { href: '#security', label: 'Security' },
+  { href: '#docs', label: 'Docs' },
+];
+---
+
+<header class="header">
+  <div class="container header-inner">
+    <a href="/" class="logo">
+      <img src="/logo.svg" alt="waterscape Logo" class="logo-img" />
+      <span class="logo-text">waterscape</span>
+    </a>
+    
+    <nav class="nav">
+      {navItems.map((item) => (
+        <a href={item.href} class="nav-link">
+          {item.label}
+        </a>
+      ))}
+    </nav>
+    
+    <div class="header-actions">
+      <a href="https://crates.io/crates/waterscape" class="nav-link" target="_blank" rel="noopener">
+        crates.io
+      </a>
+    </div>
+  </div>
+</header>
+
+<style>
+  .header {
+  }
+  
+  .header-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 60px;
+  }
+  
+  .logo {
+    display: flex;
+    align-items: center;
+    border: none;
+    font-weight: 500;
+    gap: var(--spacing-md);
+  }
+  
+  .logo-img {
+    width: 1.7rem;
+    height: 1.7rem;
+  }
+  
+  .logo-text {
+    font-size: 1.2rem;
+    letter-spacing: 0.05em;
+  }
+  
+  .nav {
+    display: flex;
+    gap: var(--spacing-xl);
+  }
+  
+  .nav-link {
+    font-size: 0.8125rem;
+    color: var(--color-text-secondary);
+    border: none;
+    transition: color var(--transition-fast);
+  }
+  
+  .nav-link:hover {
+    color: var(--color-text);
+  }
+  
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-lg);
+  }
+  
+  @media (max-width: 768px) {
+    .nav {
+      display: none;
+    }
+  }
+</style>

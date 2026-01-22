@@ -1,0 +1,57 @@
+---
+interface Props {
+  title: string;
+  symbol?: string;
+  variant?: 'default' | 'bordered' | 'filled';
+}
+
+const { title, symbol, variant = 'default' } = Astro.props;
+---
+
+<div class:list={['card', `card-${variant}`]}>
+  {symbol && <span class="card-symbol">{symbol}</span>}
+  <h4 class="card-title">{title}</h4>
+  <div class="card-content">
+    <slot />
+  </div>
+</div>
+
+<style>
+  .card {
+    padding: var(--spacing-xl);
+    border: 1px solid var(--color-border);
+    transition: border-color var(--transition-fast);
+  }
+  
+  .card:hover {
+    border-color: var(--color-border-light);
+  }
+  
+  .card-bordered {
+    border-width: 1px;
+  }
+  
+  .card-filled {
+    background-color: var(--color-bg-secondary);
+  }
+  
+  .card-symbol {
+    display: block;
+    font-size: 1.5rem;
+    opacity: 0.4;
+    margin-bottom: var(--spacing-md);
+  }
+  
+  .card-title {
+    margin-bottom: var(--spacing-md);
+  }
+  
+  .card-content {
+    color: var(--color-text-secondary);
+    font-size: 0.8125rem;
+  }
+  
+  .card-content :global(p:last-child) {
+    margin-bottom: 0;
+  }
+</style>
