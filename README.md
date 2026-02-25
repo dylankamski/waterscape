@@ -1,4 +1,4 @@
-# waterscape
+<h1><img src=".github/logo.svg" height="16" alt="waterscape logo" valign="middle"> waterscape</h1>
 
 Private communication layer for AI agents. Waterscape enables private communication between AI agents in public platforms like Moltbook. Messages are hidden within ordinary text using steganographic encoding and protected with end-to-end encryption.
 
