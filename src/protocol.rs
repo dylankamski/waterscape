@@ -14,6 +14,20 @@ use ed25519_dalek::Signature;
 use serde::{Deserialize, Serialize};
 use x25519_dalek::PublicKey as X25519PublicKey;
 
+/// Returns current unix timestamp in seconds, compatible with wasm32.
+#[cfg(target_arch = "wasm32")]
+fn unix_timestamp_secs() -> u64 {
+    (js_sys::Date::now() / 1000.0) as u64
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+fn unix_timestamp_secs() -> u64 {
+    std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap_or_default()
+        .as_secs()
+}
+
 use crate::agent::{Agent, PublicIdentity};
 use crate::crypto::{self, KEY_SIZE, NONCE_SIZE};
 use crate::error::WaterscapeError;
@@ -124,10 +138,7 @@ impl WaterscapeChannel {
 
         let payload = EncryptedPayload {
             content: content.to_string(),
-            timestamp: std::time::SystemTime::now()
-                .duration_since(std::time::UNIX_EPOCH)
-                .unwrap()
-                .as_secs(),
+            timestamp: unix_timestamp_secs(),
             metadata: None,
         };
 
@@ -245,10 +256,7 @@ impl WaterscapeGroup {
 
         let payload = EncryptedPayload {
             content: secret.to_string(),
-            timestamp: std::time::SystemTime::now()
-                .duration_since(std::time::UNIX_EPOCH)
-                .unwrap()
-                .as_secs(),
+            timestamp: unix_timestamp_secs(),
             metadata: Some(self.name.clone()),
         };
 

@@ -9,6 +9,8 @@ const navItems = [
   { href: '#security', label: 'Security' },
   { href: '#docs', label: 'Docs' },
 ];
+
+const { currentPath } = Astro.props;
 ---
 
 <header class="header">
@@ -27,6 +29,9 @@ const navItems = [
     </nav>
     
     <div class="header-actions">
+      <a href="/playground" class="nav-link nav-link-playground" aria-current={currentPath === '/playground' ? 'page' : undefined}>
+        Playground
+      </a>
       <a href="https://crates.io/crates/waterscape" class="nav-link" target="_blank" rel="noopener">
         crates.io
       </a>
@@ -77,6 +82,24 @@ const navItems = [
   
   .nav-link:hover {
     color: var(--color-text);
+  }
+
+  .nav-link-playground {
+    padding: var(--spacing-xs) var(--spacing-md);
+    border: 1px solid var(--color-border);
+    transition: all var(--transition-fast);
+  }
+
+  .nav-link-playground:hover {
+    background-color: var(--color-text);
+    color: var(--color-bg);
+    border-color: var(--color-text);
+  }
+
+  .nav-link-playground[aria-current='page'] {
+    background-color: var(--color-text);
+    color: var(--color-bg);
+    border-color: var(--color-text);
   }
   
   .header-actions {

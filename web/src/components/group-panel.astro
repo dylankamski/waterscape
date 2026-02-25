@@ -1,0 +1,332 @@
+---
+---
+
+<div class="tab-panel" id="tab-group">
+  <div class="group-grid">
+
+    <!-- Setup -->
+    <div class="col">
+      <div class="panel">
+        <div class="panel-hd">
+          <span class="panel-title">Group Setup</span>
+          <span class="panel-badge">WasmWaterscapeGroup</span>
+        </div>
+        <div class="panel-body">
+          <div class="field">
+            <label class="field-label">Group Name</label>
+            <input type="text" id="group-name" value="secret-ops" />
+          </div>
+          <div class="group-members-block">
+            <div class="members-label">Members (3 agents auto-created)</div>
+            <div id="group-members-list" class="members-list"></div>
+          </div>
+          <button class="action-btn primary" id="create-group-btn" disabled>
+            <span>Create Group</span>
+            <span class="btn-sym">∪</span>
+          </button>
+          <div class="group-created" id="group-status" style="display:none">
+            <span class="created-check">✓</span>
+            <span>Group <strong id="group-status-name"></strong> created with <span id="member-count"></span> members</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Encode -->
+    <div class="col">
+      <div class="panel">
+        <div class="panel-hd">
+          <span class="panel-title">Group Encode</span>
+          <span class="panel-badge" id="group-sender-label">—</span>
+        </div>
+        <div class="panel-body">
+          <div class="field">
+            <label class="field-label">Sender</label>
+            <select id="group-sender" disabled>
+              <option value="">Create group first…</option>
+            </select>
+          </div>
+          <div class="field">
+            <label class="field-label">Cover Text</label>
+            <textarea id="group-cover" rows="3">Just chatting about the weather today!</textarea>
+          </div>
+          <div class="field">
+            <label class="field-label">Secret Payload</label>
+            <textarea id="group-secret" rows="2">Group meeting at 3pm. Bring the documents.</textarea>
+          </div>
+          <button class="action-btn primary" id="group-encode-btn" disabled>
+            <span>Encode for Group</span>
+            <span class="btn-sym">⊕</span>
+          </button>
+          <div class="result-box" id="group-encode-result" style="display:none">
+            <div class="result-hd">
+              <span class="result-label">Encoded Output</span>
+              <button class="copy-btn" id="copy-group-encoded">Copy raw</button>
+            </div>
+            <div class="encoded-text" id="group-encoded-text"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Decode -->
+    <div class="col">
+      <div class="panel">
+        <div class="panel-hd">
+          <span class="panel-title">Group Decode</span>
+          <span class="panel-badge">Any member can decrypt</span>
+        </div>
+        <div class="panel-body">
+          <div class="field">
+            <label class="field-label">Encoded Text</label>
+            <textarea id="group-decode-input" rows="4" placeholder="Paste group-encoded text, or encode something and use Use Last…"></textarea>
+          </div>
+          <div class="decode-actions">
+            <button class="action-btn primary" id="group-decode-btn" disabled>
+              <span>Decode with Group Key</span>
+              <span class="btn-sym">∃</span>
+            </button>
+            <button class="action-btn" id="group-use-encoded-btn" disabled>
+              <span>Use Last</span>
+              <span class="btn-sym">→</span>
+            </button>
+          </div>
+          <div class="result-box success" id="group-decode-result" style="display:none">
+            <div class="result-hd">
+              <span class="result-label">Decrypted Secret</span>
+              <span class="verified-badge">✓ Verified</span>
+            </div>
+            <div class="decoded-text" id="group-decoded-text"></div>
+          </div>
+          <div class="result-box error" id="group-decode-error" style="display:none">
+            <div class="result-hd"><span class="result-label">Failed</span></div>
+            <div class="error-text" id="group-error-text"></div>
+          </div>
+
+          <div class="info-box" id="group-outsider-box" style="display:none">
+            <span class="info-sym">⊗</span>
+            <div class="info-content">
+              <strong>Outsider Test</strong>
+              <p>An agent outside the group tries to decode — should fail.</p>
+            </div>
+            <button class="action-btn" id="group-outsider-btn" disabled>Try as Outsider</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<style>
+  .group-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--spacing-xl);
+    align-items: start;
+  }
+
+  .panel {
+    border: 1px solid var(--color-border);
+    background: var(--color-bg);
+  }
+
+  .panel-hd {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--spacing-sm) var(--spacing-lg);
+    border-bottom: 1px solid var(--color-border);
+    background: var(--color-bg-secondary);
+  }
+
+  .panel-title {
+    font-size: 0.6875rem;
+    color: var(--color-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+
+  .panel-badge { font-size: 0.625rem; color: var(--color-text-tertiary); }
+
+  .panel-body { padding: var(--spacing-lg); }
+
+  .field { margin-bottom: var(--spacing-md); }
+
+  .field-label {
+    display: block;
+    font-size: 0.6875rem;
+    color: var(--color-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: var(--spacing-xs);
+  }
+
+  .field input,
+  .field select,
+  .field textarea { width: 100%; }
+
+  .group-members-block {
+    margin-bottom: var(--spacing-md);
+  }
+
+  .members-label {
+    font-size: 0.6875rem;
+    color: var(--color-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: var(--spacing-xs);
+  }
+
+  .members-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    background: var(--color-border);
+    border: 1px solid var(--color-border);
+  }
+
+  :global(.member-item) {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    padding: var(--spacing-sm) var(--spacing-md);
+    background: var(--color-bg);
+    font-size: 0.75rem;
+  }
+
+  :global(.member-avatar) {
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--color-border);
+    font-size: 0.6875rem;
+    color: var(--color-text-secondary);
+    flex-shrink: 0;
+  }
+
+  :global(.member-fp) {
+    font-size: 0.5625rem;
+    color: var(--color-text-tertiary);
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .action-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-sm);
+    width: 100%;
+    padding: var(--spacing-md);
+    font-size: 0.8125rem;
+    font-family: var(--font-mono);
+  }
+
+  .action-btn.primary {
+    background: var(--color-text);
+    color: var(--color-bg);
+    border-color: var(--color-text);
+  }
+
+  .action-btn.primary:hover {
+    background: transparent;
+    color: var(--color-text);
+  }
+
+  .action-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+  .btn-sym { opacity: 0.6; }
+
+  .decode-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
+  }
+
+  .group-created {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    margin-top: var(--spacing-md);
+    padding: var(--spacing-sm) var(--spacing-md);
+    border: 1px solid var(--color-border);
+    font-size: 0.75rem;
+    color: var(--color-text-secondary);
+  }
+
+  .created-check { color: var(--color-text); }
+
+  .result-box {
+    margin-top: var(--spacing-md);
+    border: 1px solid var(--color-border);
+    padding: var(--spacing-md);
+    background: var(--color-bg-secondary);
+  }
+
+  .result-box.success { border-color: var(--color-border-light); }
+  .result-box.error   { border-color: #444; }
+
+  .result-hd {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-sm);
+  }
+
+  .result-label {
+    font-size: 0.625rem;
+    color: var(--color-text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+
+  .verified-badge { font-size: 0.625rem; color: var(--color-text-secondary); }
+
+  .copy-btn {
+    font-size: 0.625rem;
+    padding: 2px 8px;
+    border: 1px solid var(--color-border);
+    background: transparent;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    font-family: var(--font-mono);
+    width: auto;
+  }
+
+  .copy-btn:hover { background: var(--color-text); color: var(--color-bg); border-color: var(--color-text); }
+
+  .encoded-text { font-size: 0.8125rem; line-height: 1.5; word-break: break-word; }
+  .decoded-text { font-size: 0.875rem; font-weight: 500; line-height: 1.5; }
+  .error-text   { font-size: 0.75rem; color: var(--color-text-secondary); word-break: break-word; }
+
+  .info-box {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--spacing-md);
+    margin-top: var(--spacing-md);
+    padding: var(--spacing-md);
+    border: 1px solid var(--color-border);
+  }
+
+  .info-sym { font-size: 1.25rem; opacity: 0.4; flex-shrink: 0; margin-top: 2px; }
+  .info-content { flex: 1; font-size: 0.75rem; }
+  .info-content strong { display: block; margin-bottom: var(--spacing-xs); }
+  .info-content p { margin: 0; color: var(--color-text-secondary); }
+  .info-box .action-btn { width: auto; padding: var(--spacing-sm) var(--spacing-md); flex-shrink: 0; }
+
+  @media (max-width: 1024px) {
+    .group-grid { grid-template-columns: 1fr 1fr; }
+  }
+
+  @media (max-width: 768px) {
+    .group-grid { grid-template-columns: 1fr; }
+    .decode-actions { grid-template-columns: 1fr; }
+  }
+</style>

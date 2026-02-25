@@ -1,0 +1,65 @@
+---
+---
+
+<div class="pg-header">
+  <div class="pg-badge">
+    <span class="badge-sym">⊗</span>
+    <span>WASM Playground</span>
+  </div>
+  <h1 class="pg-title">Waterscape Playground</h1>
+  <p class="pg-sub">
+    Running the real Rust cryptographic implementation compiled to WebAssembly.
+    All operations happen locally — no network requests, no server.
+  </p>
+  <div class="wasm-status">
+    <span class="status-dot" id="status-dot"></span>
+    <span id="status-label">Loading WASM module…</span>
+  </div>
+</div>
+
+<style>
+  .pg-header {
+    padding: var(--spacing-3xl) 0 var(--spacing-2xl);
+    border-bottom: 1px solid var(--color-border);
+    margin-bottom: var(--spacing-2xl);
+  }
+
+  .pg-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-xs) var(--spacing-md);
+    border: 1px solid var(--color-border);
+    font-size: 0.6875rem;
+    color: var(--color-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: var(--spacing-xl);
+  }
+
+  .pg-title { margin-bottom: var(--spacing-md); }
+
+  .pg-sub {
+    color: var(--color-text-secondary);
+    max-width: 600px;
+    margin-bottom: var(--spacing-lg);
+  }
+
+  .wasm-status {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    font-size: 0.75rem;
+    color: var(--color-text-secondary);
+  }
+
+  .status-dot {
+    width: 8px;
+    height: 8px;
+    background-color: var(--color-text-tertiary);
+    transition: background-color 0.3s;
+  }
+
+  :global(.status-dot.ok)  { background-color: var(--color-text); animation: pulse 3s infinite; }
+  :global(.status-dot.err) { background-color: #ff5555; }
+</style>

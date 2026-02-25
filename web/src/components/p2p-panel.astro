@@ -1,0 +1,469 @@
+---
+---
+
+<div class="tab-panel active" id="tab-p2p">
+  <div class="p2p-grid">
+
+    <div class="col">
+      <div class="panel">
+        <div class="panel-hd">
+          <span class="panel-title">Agents</span>
+          <span class="panel-badge">Identity Keypairs</span>
+        </div>
+        <div class="panel-body">
+          <div class="agent-row" id="agent-alice">
+            <div class="agent-avatar">A</div>
+            <div class="agent-info">
+              <span class="agent-name" id="alice-name">Alice</span>
+              <span class="agent-fp" id="alice-fp">initializing…</span>
+            </div>
+            <button class="icon-btn" id="regen-alice" title="Regenerate Alice">↺</button>
+          </div>
+          <div class="agent-divider">
+            <span class="divider-line"></span>
+            <span class="divider-label">↕</span>
+            <span class="divider-line"></span>
+          </div>
+          <div class="agent-row" id="agent-bob">
+            <div class="agent-avatar">B</div>
+            <div class="agent-info">
+              <span class="agent-name" id="bob-name">Bob</span>
+              <span class="agent-fp" id="bob-fp">initializing…</span>
+            </div>
+            <button class="icon-btn" id="regen-bob" title="Regenerate Bob">↺</button>
+          </div>
+          <button class="swap-btn" id="swap-btn">
+            <span>Swap Direction</span>
+            <span class="btn-sym">⇄</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="panel mt-md" id="identity-panel" style="display:none">
+        <div class="panel-hd">
+          <span class="panel-title">Public Identity</span>
+          <span class="panel-badge" id="id-panel-owner"></span>
+        </div>
+        <div class="panel-body">
+          <pre class="identity-json" id="identity-json"></pre>
+        </div>
+      </div>
+    </div>
+      
+    <div class="col">
+      <div class="panel">
+        <div class="panel-hd">
+          <span class="panel-title">Encode</span>
+          <span class="panel-badge" id="encode-direction">Alice → Bob</span>
+        </div>
+        <div class="panel-body">
+          <div class="field">
+            <label class="field-label">Cover Text</label>
+            <textarea id="cover-text" rows="3">The quarterly report shows positive growth across all sectors.</textarea>
+          </div>
+          <div class="field">
+            <label class="field-label">Secret Payload</label>
+            <textarea id="secret-text" rows="3">Meet at coordinates 51.5074, -0.1278 at midnight.</textarea>
+          </div>
+          <button class="action-btn primary" id="encode-btn" disabled>
+            <span>Encode with WASM</span>
+            <span class="btn-sym">⊕</span>
+          </button>
+
+          <div class="result-box" id="encode-result" style="display:none">
+            <div class="result-hd">
+              <span class="result-label">Encoded Output (visible text shown)</span>
+              <button class="copy-btn" id="copy-encoded">Copy raw</button>
+            </div>
+            <div class="encoded-text" id="encoded-text"></div>
+            <div class="stats-row">
+              <div class="stat">
+                <span class="stat-label">Visible</span>
+                <span class="stat-val" id="stat-visible">—</span>
+              </div>
+              <div class="stat">
+                <span class="stat-label">Secret bytes</span>
+                <span class="stat-val" id="stat-hidden">—</span>
+              </div>
+              <div class="stat">
+                <span class="stat-label">Total chars</span>
+                <span class="stat-val" id="stat-total">—</span>
+              </div>
+              <div class="stat">
+                <span class="stat-label">ZW chars</span>
+                <span class="stat-val" id="stat-zw">—</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel mt-md" id="stego-viz" style="display:none">
+        <div class="panel-hd">
+          <span class="panel-title">Steganographic Layer</span>
+          <span class="panel-badge">Zero-Width Unicode</span>
+        </div>
+        <div class="panel-body">
+          <div class="layer-row">
+            <span class="layer-name">Public</span>
+            <div class="layer-val" id="viz-public"></div>
+          </div>
+          <div class="layer-row">
+            <span class="layer-name">Hidden</span>
+            <div class="layer-val stego-text" id="viz-stego"></div>
+          </div>
+          <div class="layer-row">
+            <span class="layer-name">Crypto</span>
+            <div class="layer-val crypto-text" id="viz-crypto"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col">
+      <div class="panel">
+        <div class="panel-hd">
+          <span class="panel-title">Decode</span>
+          <span class="panel-badge" id="decode-direction">Bob ← Alice</span>
+        </div>
+        <div class="panel-body">
+          <div class="field">
+            <label class="field-label">Encoded Text</label>
+            <textarea id="decode-input" rows="5" placeholder="Paste encoded text, or encode something first and press Use Last…"></textarea>
+          </div>
+          <div class="decode-actions">
+            <button class="action-btn primary" id="decode-btn" disabled>
+              <span>Decode</span>
+              <span class="btn-sym">∃</span>
+            </button>
+            <button class="action-btn" id="use-encoded-btn" disabled>
+              <span>Use Last Encoded</span>
+              <span class="btn-sym">→</span>
+            </button>
+          </div>
+
+          <div class="result-box success" id="decode-result" style="display:none">
+            <div class="result-hd">
+              <span class="result-label">Decrypted Secret</span>
+              <span class="verified-badge">✓ Ed25519 Verified</span>
+            </div>
+            <div class="decoded-text" id="decoded-text"></div>
+          </div>
+
+          <div class="result-box error" id="decode-error" style="display:none">
+            <div class="result-hd">
+              <span class="result-label">Decode Failed</span>
+            </div>
+            <div class="error-text" id="error-text"></div>
+          </div>
+
+          <div class="info-box" id="unauthorized-box" style="display:none">
+            <span class="info-sym">⊗</span>
+            <div class="info-content">
+              <strong>Unauthorized Access Test</strong>
+              <p>Eve (a third agent with different keys) attempts to decode — cryptography should reject it.</p>
+            </div>
+            <button class="action-btn" id="eve-btn" disabled>Try as Eve</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<style>
+  .p2p-grid {
+    display: grid;
+    grid-template-columns: 260px 1fr 1fr;
+    gap: var(--spacing-xl);
+    align-items: start;
+  }
+
+  .panel {
+    border: 1px solid var(--color-border);
+    background: var(--color-bg);
+  }
+
+  .panel-hd {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--spacing-sm) var(--spacing-lg);
+    border-bottom: 1px solid var(--color-border);
+    background: var(--color-bg-secondary);
+  }
+
+  .panel-title {
+    font-size: 0.6875rem;
+    color: var(--color-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+
+  .panel-badge { font-size: 0.625rem; color: var(--color-text-tertiary); }
+
+  .panel-body { padding: var(--spacing-lg); }
+
+  .agent-row {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    padding: var(--spacing-md);
+    border: 1px solid var(--color-border);
+    cursor: pointer;
+    transition: border-color var(--transition-fast);
+  }
+
+  .agent-row:hover { border-color: var(--color-border-light); }
+
+  .agent-avatar {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--color-border);
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--color-text-secondary);
+    flex-shrink: 0;
+  }
+
+  .agent-info {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .agent-name { font-size: 0.8125rem; font-weight: 500; }
+
+  .agent-fp {
+    font-size: 0.5625rem;
+    color: var(--color-text-tertiary);
+    font-family: var(--font-mono);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .icon-btn {
+    padding: var(--spacing-xs) var(--spacing-sm);
+    font-size: 1rem;
+    border: 1px solid transparent;
+    flex-shrink: 0;
+  }
+
+  .agent-divider {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    margin: var(--spacing-sm) 0;
+  }
+
+  .divider-line { flex: 1; height: 1px; background: var(--color-border); }
+  .divider-label { font-size: 0.75rem; color: var(--color-text-tertiary); }
+
+  .swap-btn {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    margin-top: var(--spacing-md);
+    padding: var(--spacing-sm) var(--spacing-md);
+    font-size: 0.75rem;
+  }
+
+  .btn-sym { opacity: 0.6; }
+
+  .identity-json {
+    font-size: 0.5625rem;
+    line-height: 1.6;
+    overflow-x: auto;
+    max-height: 220px;
+    background: none;
+    border: none;
+    padding: 0;
+    color: var(--color-text-secondary);
+    white-space: pre-wrap;
+    word-break: break-all;
+  }
+
+  .field { margin-bottom: var(--spacing-md); }
+
+  .field-label {
+    display: block;
+    font-size: 0.6875rem;
+    color: var(--color-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: var(--spacing-xs);
+  }
+
+  .field textarea { resize: vertical; }
+
+  .action-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-sm);
+    width: 100%;
+    padding: var(--spacing-md);
+    font-size: 0.8125rem;
+    font-family: var(--font-mono);
+  }
+
+  .action-btn.primary {
+    background: var(--color-text);
+    color: var(--color-bg);
+    border-color: var(--color-text);
+  }
+
+  .action-btn.primary:hover {
+    background: transparent;
+    color: var(--color-text);
+  }
+
+  .action-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+  .decode-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
+  }
+
+  .result-box {
+    margin-top: var(--spacing-md);
+    border: 1px solid var(--color-border);
+    padding: var(--spacing-md);
+    background: var(--color-bg-secondary);
+  }
+
+  .result-box.success { border-color: var(--color-border-light); }
+  .result-box.error   { border-color: #444; }
+
+  .result-hd {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-sm);
+  }
+
+  .result-label {
+    font-size: 0.625rem;
+    color: var(--color-text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+
+  .verified-badge { font-size: 0.625rem; color: var(--color-text-secondary); }
+
+  .copy-btn {
+    font-size: 0.625rem;
+    padding: 2px 8px;
+    border: 1px solid var(--color-border);
+    background: transparent;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    font-family: var(--font-mono);
+    width: auto;
+  }
+
+  .copy-btn:hover { background: var(--color-text); color: var(--color-bg); border-color: var(--color-text); }
+
+  .encoded-text { font-size: 0.8125rem; line-height: 1.5; word-break: break-word; }
+  .decoded-text { font-size: 0.875rem; font-weight: 500; line-height: 1.5; }
+  .error-text   { font-size: 0.75rem; color: var(--color-text-secondary); word-break: break-word; }
+
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--spacing-md);
+    margin-top: var(--spacing-md);
+    padding-top: var(--spacing-md);
+    border-top: 1px solid var(--color-border);
+  }
+
+  .stat { display: flex; flex-direction: column; gap: 2px; }
+
+  .stat-label {
+    font-size: 0.5625rem;
+    color: var(--color-text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .stat-val { font-size: 0.875rem; font-weight: 500; }
+
+  .info-box {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--spacing-md);
+    margin-top: var(--spacing-md);
+    padding: var(--spacing-md);
+    border: 1px solid var(--color-border);
+  }
+
+  .info-sym { font-size: 1.25rem; opacity: 0.4; flex-shrink: 0; margin-top: 2px; }
+
+  .info-content { flex: 1; font-size: 0.75rem; }
+  .info-content strong { display: block; margin-bottom: var(--spacing-xs); }
+  .info-content p { margin: 0; color: var(--color-text-secondary); }
+
+  .info-box .action-btn { width: auto; padding: var(--spacing-sm) var(--spacing-md); flex-shrink: 0; }
+
+  .layer-row {
+    display: grid;
+    grid-template-columns: 56px 1fr;
+    gap: var(--spacing-md);
+    align-items: start;
+    padding: var(--spacing-sm) 0;
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .layer-row:last-child { border-bottom: none; }
+
+  .layer-name {
+    font-size: 0.5625rem;
+    color: var(--color-text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding-top: 3px;
+  }
+
+  .layer-val { font-size: 0.75rem; line-height: 1.5; word-break: break-all; }
+  .stego-text { font-family: var(--font-mono); }
+  .crypto-text { color: var(--color-text-secondary); font-size: 0.6875rem; }
+
+  :global(.zw) {
+    display: inline-block;
+    font-size: 0.5rem;
+    padding: 1px 2px;
+    margin: 0 1px;
+    border: 1px solid var(--color-border);
+    line-height: 1;
+    vertical-align: middle;
+  }
+  :global(.zw-0)   { color: var(--color-text-tertiary); }
+  :global(.zw-1)   { color: var(--color-text); }
+  :global(.zw-sep),
+  :global(.zw-start),
+  :global(.zw-end) { color: var(--color-text-secondary); border-color: var(--color-border-light); }
+
+  .mt-md { margin-top: var(--spacing-md); }
+
+  @media (max-width: 1024px) {
+    .p2p-grid { grid-template-columns: 1fr 1fr; }
+    .col:first-child { grid-column: 1 / -1; }
+  }
+
+  @media (max-width: 768px) {
+    .p2p-grid { grid-template-columns: 1fr; }
+    .col:first-child { grid-column: auto; }
+    .stats-row { grid-template-columns: repeat(2, 1fr); }
+    .decode-actions { grid-template-columns: 1fr; }
+  }
+</style>
