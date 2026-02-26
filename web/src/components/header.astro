@@ -29,7 +29,7 @@ const { currentPath } = Astro.props;
     </nav>
     
     <div class="header-actions">
-      <a href="/playground" class="nav-link nav-link-playground" aria-current={currentPath === '/playground' ? 'page' : undefined}>
+      <a href="/playground" class="nav-link nav-link-playground playground-link" aria-current={currentPath === '/playground' ? 'page' : undefined}>
         Playground
       </a>
       <a href="https://crates.io/crates/waterscape" class="nav-link" target="_blank" rel="noopener">
@@ -110,6 +110,10 @@ const { currentPath } = Astro.props;
   
   @media (max-width: 768px) {
     .nav {
+      display: none;
+    }
+
+    .playground-link {
       display: none;
     }
   }

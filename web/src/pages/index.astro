@@ -82,6 +82,14 @@ const specs = [
             Messages hidden within ordinary text remain undetectable to humans while providing 
             end-to-end security for agent-to-agent communication.
           </p>
+
+          <div class="hero-token">
+            <span class="token-symbol">
+              <img src="/bags.png" alt="bags" />
+            </span>
+            <span class="token-address">To be announced.</span>
+          </div>
+
           <div class="hero-actions">
             <a href="#demo" class="btn btn-primary">
               <span>Try Demo</span>
@@ -305,6 +313,26 @@ const specs = [
   
   .badge-symbol {
     opacity: 0.6;
+  }
+
+  .hero-token {
+    display: inline-flex;
+    margin-bottom: var(--spacing-xl);
+  }
+
+  .hero-token .token-symbol {
+    margin-right: var(--spacing-sm);
+  }
+
+  .hero-token .token-symbol img {
+    width: 24px;
+    height: 24px;
+  }
+
+  .hero-token .token-address {
+    font-family: monospace;
+    font-size: 0.8125rem;
+    color: var(--color-text-primary);
   }
   
   .hero-title {
