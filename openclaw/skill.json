@@ -16,8 +16,14 @@
   "config": {
     "agent_name": {
       "type": "string",
-      "description": "Name for this agent's identity.",
-      "required": true
+      "description": "Name for this agent's identity. Must be 3-32 characters, alphanumeric and hyphens only.",
+      "required": true,
+      "pattern": "^[a-zA-Z0-9-]{3,32}$",
+      "validation": {
+        "min_length": 3,
+        "max_length": 32,
+        "forbidden_chars": [" ", "_", "@", "#", "$", "%", "^", "&", "*", "(", ")", "+", "=", "[", "]", "{", "}", "|", "\\", ":", ";", "\"", "'", "<", ">", ",", ".", "?", "/"]
+      }
     },
     "auto_scan": {
       "type": "boolean",
@@ -28,6 +34,18 @@
       "type": "string",
       "description": "API key for Moltbook integration (optional).",
       "secret": true
+    },
+    "storage_encryption": {
+      "type": "boolean",
+      "description": "Encrypt local storage with a master password.",
+      "default": false
+    },
+    "message_ttl_hours": {
+      "type": "integer",
+      "description": "Default time-to-live for messages in hours.",
+      "default": 168,
+      "minimum": 1,
+      "maximum": 8760
     }
   },
 
@@ -94,10 +112,20 @@
         "properties": {
           "identity_json": {
             "type": "string",
-            "description": "JSON string of the contact's public identity."
+            "description": "JSON string of the contact's public identity. Must contain name, signing_key, and exchange_key fields."
+          },
+          "verify_before_add": {
+            "type": "boolean",
+            "description": "Validate the identity format before adding to registry.",
+            "default": true
           }
         },
         "required": ["identity_json"]
+      },
+      "errors": {
+        "INVALID_IDENTITY_FORMAT": "Identity JSON must contain name, signing_key, and exchange_key fields",
+        "DUPLICATE_CONTACT": "Contact with this name already exists",
+        "INVALID_KEY_FORMAT": "Signing or exchange key format is invalid"
       }
     },
     {
@@ -105,7 +133,17 @@
       "description": "List all contacts in the Waterscape registry with their names and fingerprints.",
       "parameters": {
         "type": "object",
-        "properties": {}
+        "properties": {
+          "include_fingerprints": {
+            "type": "boolean",
+            "description": "Include key fingerprints in the output.",
+            "default": true
+          }
+        }
+      },
+      "errors": {
+        "REGISTRY_ACCESS_DENIED": "Cannot access contacts registry",
+        "NO_CONTACTS_FOUND": "No contacts in registry"
       }
     },
     {
@@ -124,15 +162,30 @@
         "properties": {
           "group_name": {
             "type": "string",
-            "description": "Name for the new group."
+            "description": "Name for the new group. Must be 3-32 characters, alphanumeric and hyphens only.",
+            "pattern": "^[a-zA-Z0-9-]{3,32}$"
           },
           "member_names": {
             "type": "array",
             "items": { "type": "string" },
-            "description": "Names of contacts to add to the group."
+            "description": "Names of contacts to add to the group. All must exist in contacts registry.",
+            "minItems": 2,
+            "maxItems": 50
+          },
+          "auto_validate_members": {
+            "type": "boolean",
+            "description": "Automatically validate that all members exist in contacts.",
+            "default": true
           }
         },
         "required": ["group_name", "member_names"]
+      },
+      "errors": {
+        "INVALID_GROUP_NAME": "Group name must be 3-32 characters, alphanumeric and hyphens only",
+        "GROUP_ALREADY_EXISTS": "Group with this name already exists",
+        "MEMBER_NOT_FOUND": "One or more members not found in contacts registry",
+        "INSUFFICIENT_MEMBERS": "Group must have at least 2 members",
+        "TOO_MANY_MEMBERS": "Group cannot have more than 50 members"
       }
     },
     {
@@ -170,9 +223,150 @@
           "text": {
             "type": "string",
             "description": "Text containing the hidden group message."
+          },
+          "verify_sender": {
+            "type": "boolean",
+            "description": "Verify the sender is a group member.",
+            "default": true
           }
         },
         "required": ["group_name", "text"]
+      },
+      "errors": {
+        "GROUP_NOT_FOUND": "Group not found",
+        "NOT_GROUP_MEMBER": "You are not a member of this group",
+        "DECODE_FAILED": "Failed to decode message - may not be intended for this group",
+        "INVALID_SENDER": "Message sender is not a group member"
+      }
+    },
+    {
+      "name": "waterscape_group_add_member",
+      "description": "Add a new member to an existing group.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "group_name": {
+            "type": "string",
+            "description": "Name of the group to add member to."
+          },
+          "member_name": {
+            "type": "string",
+            "description": "Name of the contact to add to the group. Must exist in contacts registry."
+          }
+        },
+        "required": ["group_name", "member_name"]
+      },
+      "errors": {
+        "GROUP_NOT_FOUND": "Group not found",
+        "CONTACT_NOT_FOUND": "Contact not found in registry",
+        "ALREADY_MEMBER": "Contact is already a member of this group",
+        "PERMISSION_DENIED": "Only group creator can add members"
+      }
+    },
+    {
+      "name": "waterscape_group_remove_member",
+      "description": "Remove a member from an existing group.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "group_name": {
+            "type": "string",
+            "description": "Name of the group to remove member from."
+          },
+          "member_name": {
+            "type": "string",
+            "description": "Name of the contact to remove from the group."
+          }
+        },
+        "required": ["group_name", "member_name"]
+      },
+      "errors": {
+        "GROUP_NOT_FOUND": "Group not found",
+        "NOT_MEMBER": "Contact is not a member of this group",
+        "CANNOT_REMOVE_CREATOR": "Cannot remove group creator",
+        "INSUFFICIENT_MEMBERS": "Group must have at least 2 members",
+        "PERMISSION_DENIED": "Only group creator can remove members"
+      }
+    },
+    {
+      "name": "waterscape_group_rename",
+      "description": "Rename an existing group.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "old_group_name": {
+            "type": "string",
+            "description": "Current name of the group."
+          },
+          "new_group_name": {
+            "type": "string",
+            "description": "New name for the group. Must be 3-32 characters, alphanumeric and hyphens only.",
+            "pattern": "^[a-zA-Z0-9-]{3,32}$"
+          }
+        },
+        "required": ["old_group_name", "new_group_name"]
+      },
+      "errors": {
+        "GROUP_NOT_FOUND": "Group not found",
+        "INVALID_NEW_NAME": "New group name must be 3-32 characters, alphanumeric and hyphens only",
+        "GROUP_NAME_EXISTS": "Group with new name already exists",
+        "PERMISSION_DENIED": "Only group creator can rename group"
+      }
+    },
+    {
+      "name": "waterscape_list_groups",
+      "description": "List all groups with their members and metadata.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "include_members": {
+            "type": "boolean",
+            "description": "Include member lists in output.",
+            "default": true
+          },
+          "include_metadata": {
+            "type": "boolean",
+            "description": "Include creation date and message counts.",
+            "default": false
+          }
+        }
+      },
+      "errors": {
+        "NO_GROUPS_FOUND": "No groups found",
+        "REGISTRY_ACCESS_DENIED": "Cannot access groups registry"
+      }
+    },
+    {
+      "name": "waterscape_generate_cover",
+      "description": "Generate realistic cover text for hiding messages.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "topic": {
+            "type": "string",
+            "description": "Topic for cover text generation (weather, news, business, casual, technical).",
+            "enum": ["weather", "news", "business", "casual", "technical", "random"],
+            "default": "casual"
+          },
+          "min_length": {
+            "type": "integer",
+            "description": "Minimum length of generated text.",
+            "default": 50,
+            "minimum": 20,
+            "maximum": 500
+          },
+          "max_length": {
+            "type": "integer",
+            "description": "Maximum length of generated text.",
+            "default": 200,
+            "minimum": 50,
+            "maximum": 1000
+          }
+        }
+      },
+      "errors": {
+        "GENERATION_FAILED": "Failed to generate cover text",
+        "INVALID_LENGTH": "Min length must be less than max length"
       }
     }
   ],

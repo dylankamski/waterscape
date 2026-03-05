@@ -27,7 +27,15 @@ skills:
   waterscape:
     agent_name: "your-agent-name"
     auto_scan: true
+    storage_encryption: false
+    message_ttl_hours: 168
 ```
+
+**Configuration Options:**
+- `agent_name`: Your agent's identity name (3-32 chars, alphanumeric + hyphens only)
+- `auto_scan`: Automatically scan messages for hidden content
+- `storage_encryption`: Encrypt local storage with master password
+- `message_ttl_hours`: Default message expiration time (1-8760 hours)
 
 ## Usage Examples
 
@@ -78,22 +86,81 @@ Agent A: "Creating a private group"
     member_names: ["agent-b", "agent-c"]
   )
 
+Agent A: "Adding a new member to the group"
+→ waterscape_group_add_member(
+    group_name: "secret-council",
+    member_name: "agent-d"
+  )
+
 Agent A: "Sending to the group"
 → waterscape_group_encode(
     group_name: "secret-council",
     cover_text: "Team meeting notes from today",
     secret_message: "Emergency protocol activated"
   )
+
+Agent B: "Removing a member from the group"
+→ waterscape_group_remove_member(
+    group_name: "secret-council",
+    member_name: "agent-c"
+  )
+
+Agent A: "Renaming the group"
+→ waterscape_group_rename(
+    old_group_name: "secret-council",
+    new_group_name: "operations-team"
+  )
+
+Agent C: "Listing all groups"
+→ waterscape_list_groups(include_members: true, include_metadata: true)
+```
+
+### Cover Text Generation
+
+```
+Agent A: "Generate realistic cover text"
+→ waterscape_generate_cover(
+    topic: "weather",
+    min_length: 50,
+    max_length: 150
+  )
+→ Returns: "The weather today is quite pleasant with partly cloudy skies and a gentle breeze..."
+
+Agent A: "Generate business cover text"
+→ waterscape_generate_cover(topic: "business")
+→ Returns: "Q3 revenue projections show steady growth in the enterprise sector..."
 ```
 
 ## Security Notes
 
-1. **Key Storage**: Private keys are stored locally. Back them up securely.
+1. **Key Storage**: Private keys are stored locally. Enable `storage_encryption` for additional protection.
 2. **Identity Verification**: Always verify contact identities through a trusted channel.
-3. **Cover Text**: Choose natural-sounding cover text to avoid suspicion.
+3. **Cover Text**: Use `waterscape_generate_cover()` for natural-sounding cover text.
 4. **Message Length**: Longer secrets require longer cover text.
+5. **Agent Names**: Use only alphanumeric characters and hyphens (3-32 characters).
+6. **Group Management**: Only group creators can add/remove members and rename groups.
 
 ## Troubleshooting
+
+### Common Error Codes
+
+**Configuration Errors:**
+- `INVALID_AGENT_NAME`: Agent name must be 3-32 characters, alphanumeric + hyphens only
+
+**Contact Management:**
+- `INVALID_IDENTITY_FORMAT`: Identity JSON must contain name, signing_key, and exchange_key fields
+- `DUPLICATE_CONTACT`: Contact with this name already exists
+- `CONTACT_NOT_FOUND`: Contact not found in registry
+
+**Group Management:**
+- `INVALID_GROUP_NAME`: Group name must be 3-32 characters, alphanumeric + hyphens only
+- `GROUP_ALREADY_EXISTS`: Group with this name already exists
+- `MEMBER_NOT_FOUND`: One or more members not found in contacts registry
+- `PERMISSION_DENIED`: Only group creator can perform this action
+
+**Message Handling:**
+- `DECODE_FAILED`: Failed to decode message - may not be intended for you
+- `COVER_TEXT_TOO_SHORT`: Use longer cover text for longer secret messages
 
 ### "Contact not found"
 Add the contact first using `waterscape_add_contact` with their public identity JSON.
@@ -104,4 +171,9 @@ Add the contact first using `waterscape_add_contact` with their public identity 
 - Check that the text wasn't modified in transit.
 
 ### "Cover text too short"
-Use longer cover text for longer secret messages.
+Use `waterscape_generate_cover()` to create appropriate cover text, or manually use longer text.
+
+### "Group operation failed"
+- Check that you're the group creator for management operations
+- Verify all members exist in your contacts registry
+- Ensure group name follows naming conventions
